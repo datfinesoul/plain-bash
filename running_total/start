@@ -19,9 +19,12 @@ sleep 0.5
 clear
 # run awk using a script on $CACHE file
 # instead of using a script file, source the content from this script
-# 'EOF' vs EOF controls parameter substitution, in this case, $ is literal
+# 'EOF' vs EOF controls process substitution, in this case, $ is literal
 # sort the output numerically descending based on column 2, with : as delimiter
 # return the top 10 rows of the output
+
+# NOTE, the process substition here is total overkill, a plain awk config
+# file would be clearer, but this is just an example
 awk -f <(cat << 'EOF'
 { count[$1]++ }
 END { for (container in count) print container, count[container] }
