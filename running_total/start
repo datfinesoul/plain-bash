@@ -13,12 +13,10 @@ PID=""
 
 function summary {
 
-  # wait half a second
+# wait half a second
 sleep 0.5
-
 # clear the output on the terminal
 clear
-
 # run awk using a script on $CACHE file
 # instead of using a script file, source the content from this script
 # 'EOF' vs EOF controls parameter substitution, in this case, $ is literal
@@ -31,21 +29,25 @@ EOF
 ) "${CACHE}" \
   | sort -t: -nk2 -r \
   | head -n 10
+
 }
 
 #-------------------------------------------------------------------------------
-
 # function that will be invoked automatically by a trap on EXIT
+
 function cleanup {
+
 [[ -n "${PID}" ]] && kill $PID
 summary
 rm "${CACHE}"
 echo -e "\n- cleaned up '${CACHE}' and pid:$PID"
+
 }
 
 #-------------------------------------------------------------------------------
+# MAIN
 
-# said trap
+# trap that triggers cleanup
 trap cleanup EXIT
 
 (ssh syslog "tail -F /var/log/syslog | stdbuf -o0 awk '( \$5 ~ /^c/ ) { print \$5 }'" > "${CACHE}") &
