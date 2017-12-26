@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# basically, fail on errors, and require variable declaration before use
+set -o nounset; set -o errexit; set -o pipefail;
+
+# create a temp file
+# $$ is the shell process id
+# XXXXXXXX will be replaced by random characters
+CACHE="$(mktemp /tmp/running_total.$$.XXXXXXXX)"
+# variable to track the process id of the SSH tail
+PID=""
+
+#-------------------------------------------------------------------------------
+
+function summary {
+
+  # wait half a second
+sleep 0.5
+
+# clear the output on the terminal
+clear
+
+# run awk using a script on $CACHE file
+# instead of using a script file, source the content from this script
+# 'EOF' vs EOF controls parameter substitution, in this case, $ is literal
+# sort the output numerically descending based on column 2, with : as delimiter
+# return the top 10 rows of the output
+awk -f <(cat << 'EOF'
+{ count[$1]++ }
+END { for (container in count) print container, count[container] }
+EOF
+) "${CACHE}" \
+  | sort -t: -nk2 -r \
+  | head -n 10
+}
+
+#-------------------------------------------------------------------------------
+
+# function that will be invoked automatically by a trap on EXIT
+function cleanup {
+[[ -n "${PID}" ]] && kill $PID
+summary
+rm "${CACHE}"
+echo -e "\n- cleaned up '${CACHE}' and pid:$PID"
+}
+
+#-------------------------------------------------------------------------------
+
+# said trap
+trap cleanup EXIT
+
+(ssh syslog "tail -F /var/log/syslog | stdbuf -o0 awk '( \$5 ~ /^c/ ) { print \$5 }'" > "${CACHE}") &
+PID=$!
+
+# iterator if only a few iterations are desired
+ITERATIONS=0
+while [[ $ITERATIONS -lt 10 ]]; do
+# or until terminated
+#while true; do
+  summary
+  let ITERATIONS=ITERATIONS+1
+done
