@@ -58,9 +58,9 @@ PID=$!
 
 # iterator if only a few iterations are desired
 ITERATIONS=0
-while [[ $ITERATIONS -lt 10 ]]; do
-# or until terminated
-#while true; do
+#while [[ $ITERATIONS -lt 10 ]]; do
+## or until terminated
+while true; do
   summary
   let ITERATIONS=ITERATIONS+1
 done
