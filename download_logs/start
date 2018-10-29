@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -o nounset; set -o errexit; set -o pipefail;
+
+while IFS=$'\n' read ROW; do
+  read -r LOG_FILE LOG_DATE <<< $(echo $ROW)
+  LOCAL_LOG_FILE="./syslog_${LOG_DATE}.log"
+  if [[ -f "${LOCAL_LOG_FILE}" ]]; then
+    echo "${LOCAL_LOG_FILE} already exists, skipping..."
+    continue
+  fi
+  echo $LOG_FILE-$LOG_DATE
+  rsync --progress -av "syslog:${LOG_FILE}" "${LOCAL_LOG_FILE}"
+  break
+done <<< "$(ssh syslog "$(cat << 'EOF'
+  while IFS=$'\n' read FILE; do
+    stat -c '%n %y' $FILE | awk '{print $1,$2}';
+  done <<< $(ls -1t /var/log/biglogs/syslog.*.gz)
+EOF
+)")"
+

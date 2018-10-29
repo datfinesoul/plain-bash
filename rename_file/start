@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -o nounset; set -o errexit; set -o pipefail;
+
+while IFS=$'\n' read LOG_FILE; do
+  LOG_DATE=$(gstat -c %y $LOG_FILE | awk '{print $1}')
+  LOCAL_LOG_FILE="./syslog_${LOG_DATE}.log"
+  echo "rename $LOG_FILE to $LOCAL_LOG_FILE"
+  mv "${LOG_FILE}" "${LOCAL_LOG_FILE}"
+done <<< $(ls -1t syslog.*.gz)
+

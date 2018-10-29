@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# basically, fail on errors, and require variable declaration before use
+set -o nounset; set -o errexit; set -o pipefail;
+
+PID=
+function cleanup {
+  echo "leaving" $PID
+}
+
+trap cleanup EXIT
+PID=$$
+
+while true
+do
+  echo -n .
+  sleep 1
+done
+
